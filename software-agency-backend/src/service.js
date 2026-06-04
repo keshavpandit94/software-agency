@@ -14,22 +14,21 @@ app.use(cors({
 
 app.use(express.json());
 
-// Enhanced Gmail Transporter (Hardcoded IPv4 Bypass for Render Network Layer)
+// Optimized Gmail Transporter utilizing Open Port 587 STARTTLS for Cloud Environments
 const transporter = nodemailer.createTransport({
-  // 💡 DIRECT IPV4 BYPASS: Stops Render from forcing an unstable IPv6 connection path
-  host: '74.125.134.108', 
-  port: 465,
-  secure: true, // Use SSL
+  host: 'smtp.gmail.com',
+  port: 587,              
+  secure: false,          
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS 
   },
   tls: {
     rejectUnauthorized: false,
-    // 💡 CRITICAL: Tells Google's SSL firewall that we are connecting to Gmail's certified network
-    servername: 'smtp.gmail.com' 
+    servername: 'smtp.gmail.com'
   },
-  connectionTimeout: 20000,
+  family: 4, 
+  connectionTimeout: 15000,
   greetingTimeout: 15000
 });
 
@@ -48,7 +47,7 @@ app.post('/send-transmission', (req, res) => {
   const mailOptions = {
     from: `"Apex System" <${process.env.EMAIL_USER}>`, 
     to: process.env.EMAIL_USER, 
-    replyTo: email, // Direct reply path to customer
+    replyTo: email, 
     subject: `[SYSTEM] New Project: ${service}`,
     text: `
 --- INCOMING TRANSMISSION ---
@@ -73,9 +72,7 @@ TECHNICAL BRIEF:
   });
 });
 
-// Render assigns a dynamic port via process.env.PORT.
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
   console.log(`
   -----------------------------------------

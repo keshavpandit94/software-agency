@@ -14,9 +14,10 @@ app.use(cors({
 
 app.use(express.json());
 
-// Enhanced Gmail Transporter optimized for Cloud Deployments (Render IPv4 Force)
+// Enhanced Gmail Transporter (Hardcoded IPv4 Bypass for Render Network Layer)
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
+  // 💡 DIRECT IPV4 BYPASS: Stops Render from forcing an unstable IPv6 connection path
+  host: '74.125.134.108', 
   port: 465,
   secure: true, // Use SSL
   auth: {
@@ -25,12 +26,11 @@ const transporter = nodemailer.createTransport({
   },
   tls: {
     rejectUnauthorized: false,
-    servername: 'smtp.gmail.com' // Matches SSL certificate domain
+    // 💡 CRITICAL: Tells Google's SSL firewall that we are connecting to Gmail's certified network
+    servername: 'smtp.gmail.com' 
   },
-  // 💡 CRITICAL FIX FOR ENETUNREACH: Forces Node to use IPv4 instead of IPv6
-  family: 4, 
-  connectionTimeout: 15000, // Generous timeout for cloud cold starts
-  greetingTimeout: 10000
+  connectionTimeout: 20000,
+  greetingTimeout: 15000
 });
 
 // Verify connection configuration on startup

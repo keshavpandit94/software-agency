@@ -14,7 +14,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// Enhanced Gmail Transporter optimized for Cloud Deployments (Render)
+// Enhanced Gmail Transporter optimized for Cloud Deployments (Render IPv4 Force)
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
@@ -25,9 +25,12 @@ const transporter = nodemailer.createTransport({
   },
   tls: {
     rejectUnauthorized: false,
-    servername: 'smtp.gmail.com' // 💡 CRITICAL: Forces Render to match Google's SSL certificate domain
+    servername: 'smtp.gmail.com' // Matches SSL certificate domain
   },
-  connectionTimeout: 10000 // Prevents the cloud connection from dropping prematurely
+  // 💡 CRITICAL FIX FOR ENETUNREACH: Forces Node to use IPv4 instead of IPv6
+  family: 4, 
+  connectionTimeout: 15000, // Generous timeout for cloud cold starts
+  greetingTimeout: 10000
 });
 
 // Verify connection configuration on startup
@@ -70,7 +73,7 @@ TECHNICAL BRIEF:
   });
 });
 
-// CRITICAL FIX: Render assigns a random port via process.env.PORT. 
+// Render assigns a dynamic port via process.env.PORT.
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

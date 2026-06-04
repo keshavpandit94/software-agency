@@ -6,15 +6,15 @@ export default function Contact() {
     name: '',
     email: '',
     service: 'Web Systems',
-    budget: 'Medium (₹30k)', // Updated default to match new set
+    budget: 'Medium (₹30k)', 
     message: ''
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSending, setIsSending] = useState(false);
   
-  const api = "https://software-agency-backend.onrender.com"
-  // const api = "http://localhost:5000"
+  // Clean production API endpoint
+  const api = "https://software-agency-backend.onrender.com";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,14 +34,15 @@ export default function Contact() {
 
       if (response.ok) {
         setIsSubmitted(true);
-        // Reset with new budget default
+        // Reset state matching new defaults safely
         setFormData({ name: '', email: '', service: 'Web Systems', budget: 'Medium (₹30k)', message: '' });
       } else {
-        alert("Backend Error: Failed to route transmission. Check server logs.");
+        alert("Backend Error: Failed to route transmission. Check your server's environment variables.");
       }
     } catch (error) {
       console.error("Connection Error:", error);
-      alert("System Offline: Ensure your backend server is running on port 5000.");
+      // FIXED: Swapped out hardcoded local port notification text for active network feedback
+      alert("Network Error: Cloud nodes could not establish a connection handshake. Try again later.");
     } finally {
       setIsSending(false);
       setTimeout(() => setIsSubmitted(false), 5000);
@@ -85,7 +86,7 @@ export default function Contact() {
             <div className="space-y-4">
               {[{ label: 'Engineering', val: 'pkeshav282@gmail.com', color: 'blue' }, { label: 'Partnerships', val: 'pkeshav282@gmail.com', color: 'purple' }].map((item, i) => (
                 <div key={i} onClick={() => handleDirectMail(item.val)} className="group p-8 bg-white/5 border border-white/5 rounded-[2rem] backdrop-blur-xl flex items-center gap-6 transition-all hover:border-white/20 cursor-pointer">
-                  <div className={`w-12 h-12 rounded-xl bg-${item.color}-500/10 flex items-center justify-center text-${item.color}-500 group-hover:bg-${item.color}-500 group-hover:text-white transition-all`}>
+                  <div className={`w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                   </div>
                   <div>
@@ -106,7 +107,7 @@ export default function Contact() {
                       <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                     </div>
                     <h3 className="text-4xl font-black tracking-tighter mb-4 uppercase italic text-white">Transmission Received</h3>
-                    <p className="text-gray-400 font-light max-w-sm">Data has been successfully routed to pkeshav282@gmail.com via the secure backend node.</p>
+                    <p className="text-gray-400 font-light max-w-sm">Data has been successfully routed to your endpoint via the secure backend node.</p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -127,18 +128,18 @@ export default function Contact() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 pl-1">Capability</label>
                     <select name="service" value={formData.service} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-blue-500 appearance-none font-light cursor-pointer">
-                      <option className="bg-[#0A0A0A]">Web Systems</option>
-                      <option className="bg-[#0A0A0A]">Mobile OS</option>
-                      <option className="bg-[#0A0A0A]">Enterprise ERP</option>
+                      <option value="Web Systems" className="bg-[#0A0A0A]">Web Systems</option>
+                      <option value="Mobile OS" className="bg-[#0A0A0A]">Mobile OS</option>
+                      <option value="Enterprise ERP" className="bg-[#0A0A0A]">Enterprise ERP</option>
                     </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 pl-1">Scale (INR)</label>
                     <select name="budget" value={formData.budget} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-blue-500 appearance-none font-light cursor-pointer">
-                      <option className="bg-[#0A0A0A]">Lite (₹15k)</option>
-                      <option className="bg-[#0A0A0A]">Medium (₹30k)</option>
-                      <option className="bg-[#0A0A0A]">Scale (₹60k)</option>
-                      <option className="bg-[#0A0A0A]">Custom / Enterprise</option>
+                      <option value="Lite (₹15k)" className="bg-[#0A0A0A]">Lite (₹15k)</option>
+                      <option value="Medium (₹30k)" className="bg-[#0A0A0A]">Medium (₹30k)</option>
+                      <option value="Scale (₹60k)" className="bg-[#0A0A0A]">Scale (₹60k)</option>
+                      <option value="Custom / Enterprise" className="bg-[#0A0A0A]">Custom / Enterprise</option>
                     </select>
                   </div>
                 </div>

@@ -14,19 +14,20 @@ app.use(cors({
 
 app.use(express.json());
 
-// Enhanced Gmail Transporter
+// Enhanced Gmail Transporter optimized for Cloud Deployments (Render)
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
   secure: true, // Use SSL
   auth: {
-    // These will pull from Render's Environment tab in production
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS 
   },
   tls: {
-    rejectUnauthorized: false // Bypasses certificate issues on cloud containers
-  }
+    rejectUnauthorized: false,
+    servername: 'smtp.gmail.com' // 💡 CRITICAL: Forces Render to match Google's SSL certificate domain
+  },
+  connectionTimeout: 10000 // Prevents the cloud connection from dropping prematurely
 });
 
 // Verify connection configuration on startup
@@ -70,7 +71,6 @@ TECHNICAL BRIEF:
 });
 
 // CRITICAL FIX: Render assigns a random port via process.env.PORT. 
-// Forcing 5000 directly breaks Render's routing architecture.
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

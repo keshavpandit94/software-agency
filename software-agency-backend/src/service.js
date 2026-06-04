@@ -5,9 +5,9 @@ require('dotenv').config();
 
 const app = express();
 
-// Update CORS to allow your specific frontend port
+// Update CORS to allow all origins safely for testing
 app.use(cors({
-origin: '*', // Allow your Vite frontend
+  origin: '*', 
   methods: ['POST', 'GET'],
   allowedHeaders: ['Content-Type']
 }));
@@ -20,20 +20,21 @@ const transporter = nodemailer.createTransport({
   port: 465,
   secure: true, // Use SSL
   auth: {
+    // These will pull from Render's Environment tab in production
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS 
   },
   tls: {
-    rejectUnauthorized: false // Bypasses local certificate issues
+    rejectUnauthorized: false // Bypasses certificate issues on cloud containers
   }
 });
 
 // Verify connection configuration on startup
 transporter.verify((error, success) => {
   if (error) {
-    console.log("SMTP Connection Error:", error);
+    console.log("❌ SMTP Connection Error:", error);
   } else {
-    console.log("Mail Server is ready to take transmissions");
+    console.log("🚀 Mail Server is ready to take transmissions");
   }
 });
 
@@ -41,9 +42,9 @@ app.post('/send-transmission', (req, res) => {
   const { name, email, service, budget, message } = req.body;
 
   const mailOptions = {
-    from: `"Apex System" <pkeshav282@gmail.com>`, 
+    from: `"Apex System" <${process.env.EMAIL_USER}>`, 
     to: process.env.EMAIL_USER, 
-    replyTo: email, // This allows you to reply directly to the customer
+    replyTo: email, // Direct reply path to customer
     subject: `[SYSTEM] New Project: ${service}`,
     text: `
 --- INCOMING TRANSMISSION ---
@@ -60,15 +61,18 @@ TECHNICAL BRIEF:
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.error("Nodemailer Error:", error);
+      console.error("❌ Nodemailer Error:", error);
       return res.status(500).json({ success: false, message: "Transmission Failed" });
     }
-    console.log("Email sent: " + info.response);
+    console.log("📨 Email sent successfully: " + info.response);
     res.status(200).json({ success: true, message: "Transmission Successful" });
   });
 });
 
-const PORT = 5000;
+// CRITICAL FIX: Render assigns a random port via process.env.PORT. 
+// Forcing 5000 directly breaks Render's routing architecture.
+const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
   console.log(`
   -----------------------------------------

@@ -12,6 +12,9 @@ export default function Contact() {
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  
+  const api = "https://software-agency-backend.onrender.com"
+  // const api = "http://localhost:5000"
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,7 +26,7 @@ export default function Contact() {
     setIsSending(true);
 
     try {
-      const response = await fetch('http://localhost:5000/send-transmission', {
+      const response = await fetch(`${api}/send-transmission`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

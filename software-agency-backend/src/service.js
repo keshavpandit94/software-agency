@@ -1,11 +1,12 @@
+// server.js
 const express = require('express');
-const nodemailer = require('nodemailer');
 const cors = require('cors');
+const { google } = require('googleapis');
 require('dotenv').config();
 
 const app = express();
 
-// Update CORS to allow all origins safely for testing
+// Enable Production Cross-Origin Resource Sharing for Frontend Access
 app.use(cors({
   origin: '*', 
   methods: ['POST', 'GET'],
@@ -14,67 +15,104 @@ app.use(cors({
 
 app.use(express.json());
 
-// UPDATED: Shifted to Secure Port 465 (SSL) to bypass Cloud Provider Firewall Blocks
-const transporter = nodemailer.createTransport({
-  service: 'gmail', // Native shortcut handles host, port rules, and TLS servernames cleanly
-  port: 465,        // Secure port 465 is rarely blocked by hosting providers
-  secure: true,     // Must be true for port 465
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS // Must be your 16-character Google App Password
-  },
-  tls: {
-    rejectUnauthorized: false // Keeps cloud environments from breaking on handshake mismatches
-  }
+// 1. BULLETPROOF GOOGLE SHEETS AUTHENTICATION HANDSHAKE
+const auth = new google.auth.GoogleAuth({
+  keyFile: './google-credentials.json', 
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
-// Verify connection configuration on startup
-transporter.verify((error, success) => {
-  if (error) {
-    console.log("❌ SMTP Connection Error:", error);
-  } else {
-    console.log("🚀 Mail Server is ready to take transmissions");
-  }
-});
+const sheets = google.sheets({ version: 'v4', auth });
+const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
 
-app.post('/send-transmission', (req, res) => {
+// 2. SEPARATE MONTH-BY-MONTH GRID VALIDATOR / GENERATOR
+async function getOrCreateMonthlySheet(sheetTitle) {
+  try {
+    const doc = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+    const sheetExists = doc.data.sheets.some(s => s.properties.title === sheetTitle);
+
+    if (!sheetExists) {
+      // Append a completely fresh workspace sheet tab
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        requestBody: {
+          requests: [{
+            addSheet: { properties: { title: sheetTitle } }
+          }]
+        }
+      });
+
+      // FIXED: Removed 'Raw Logs Reference Layout' header. Now strictly contains 6 data columns.
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${sheetTitle}!A1`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [['Timestamp', 'Identity', 'Digital Mail', 'Capability', 'Scale (INR)', 'Technical Brief']]
+        }
+      });
+      console.log(`📁 Generated fresh monthly structural matrix tab: ${sheetTitle}`);
+    }
+  } catch (err) {
+    console.error("❌ Failed sheet structural directory parsing validation:", err);
+    throw err;
+  }
+}
+
+// 3. MAIN NETWORK TRANSMISSION RECEIVER INBOUND ENDPOINT
+app.post('/send-transmission', async (req, res) => {
   const { name, email, service, budget, message } = req.body;
 
-  const mailOptions = {
-    from: `"Apex System" <${process.env.EMAIL_USER}>`, 
-    to: process.env.EMAIL_USER, 
-    replyTo: email, 
-    subject: `[SYSTEM] New Project: ${service}`,
-    text: `
---- INCOMING TRANSMISSION ---
-IDENTITY: ${name}
-CONTACT: ${email}
-CAPABILITY: ${service}
-SCALE: ${budget}
+  const now = new Date();
+  
+  // FIXED: Explicitly forced Indian Standard Time (IST) for calendar sheet consistency.
+  // This guarantees tabs create sequentially on the right month independent of Render's server locations.
+  const currentMonthYear = now.toLocaleString('en-US', { 
+    month: 'long', 
+    year: 'numeric',
+    timeZone: 'Asia/Kolkata'
+  }); // Output format: "July 2026"
+  
+  const formattedDate = now.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' }) + ' ' + 
+                        now.toLocaleTimeString('en-US', { hour12: false, timeZone: 'Asia/Kolkata' }); // Output format: "06/07/2026 20:30:15"
 
-TECHNICAL BRIEF:
-"${message}"
------------------------------
-    `
-  };
+  try {
+    // Structural guard check ensures proper target layout exists
+    await getOrCreateMonthlySheet(currentMonthYear);
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error("❌ Nodemailer Error:", error);
-      return res.status(500).json({ success: false, message: "Transmission Failed" });
-    }
-    console.log("📨 Email sent successfully: " + info.response);
-    res.status(200).json({ success: true, message: "Transmission Successful" });
-  });
+    // FIXED: Stripped out the raw multi-line template argument string. 
+    // Data appends directly, cleaning up the sheet view.
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${currentMonthYear}!A:F`,
+      valueInputOption: 'USER_ENTERED', 
+      requestBody: {
+        values: [[formattedDate, name, email, service, budget, message]]
+      }
+    });
+
+    console.log(`📑 Transmission logged smoothly date by date inside sheet matrix [${currentMonthYear}]`);
+    res.status(200).json({ success: true, message: "Transmission stored successfully." });
+
+  } catch (error) {
+    console.error("❌ Google Sheets Core API Execution Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
+// Root router status path for handling frontend mount pre-warming requests safely
+app.get('/', (req, res) => {
+  res.status(200).send("System Online. Ready for discovery packets.");
+});
+
+// 4. SERVER INITIALIZATION PORTS
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`
-  -----------------------------------------
-  Node.js Backend Operational
-  Port: ${PORT}
-  Status: Listening for discovery packets
-  -----------------------------------------
+  -------------------------------------------------------------
+  Node.js Production Pipeline Operational
+  Active Mapping Port: ${PORT}
+  Targeting Grid Matrix: ${SPREADSHEET_ID ? 'CONFIGURED' : 'MISSING SPREADSHEET ID'}
+  Authentication Mode: JSON KEYFILE SECURED
+  -------------------------------------------------------------
   `);
 });

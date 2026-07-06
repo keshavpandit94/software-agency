@@ -14,21 +14,20 @@ export default function Contact() {
   const [isSending, setIsSending] = useState(false);
   const [isWakingServer, setIsWakingServer] = useState(true);
   
-  // Clean production API endpoint
-  const api = "https://software-agency-backend.onrender.com";
+  // Clean production API endpoint targeting your Render node
+  const api = "http://localhost:5000";
 
-  // WAKE UP HANDSHAKE: Fires immediately when the component mounts to handle Render's free tier sleep mode
+  // WAKE UP HANDSHAKE: Fires immediately on mount to spin up Render's free tier instance
   useEffect(() => {
     const wakeServer = async () => {
       try {
-        // Send a silent GET request to your backend's root or a status endpoint
+        // Ping the backend root endpoint to wake it up silently
         await fetch(api);
         setIsWakingServer(false);
-        console.log("⚙️ Render node successfully spun up and initialized.");
+        console.log("⚙️ Render matrix node awake and accepting packets.");
       } catch (error) {
-        // If it fails initially, it could be halfway through spinning up; let the user still attempt the submission
         setIsWakingServer(false); 
-        console.warn("⚠️ Initial server handshake failed, could still be initialization sequence.");
+        console.warn("⚠️ Initial server handshake delayed. Continuing execution.");
       }
     };
 
@@ -53,15 +52,14 @@ export default function Contact() {
 
       if (response.ok) {
         setIsSubmitted(true);
-        // Reset state matching new defaults safely
+        // Reset states safely matching system defaults
         setFormData({ name: '', email: '', service: 'Web Systems', budget: 'Medium (₹30k)', message: '' });
       } else {
-        alert("Transmission routing failed on the secure node. Please use the Direct Contact email links.");
+        alert("Transmission routing failed on the database node. Please use the Direct Contact links.");
       }
     } catch (error) {
-      console.error("Connection Error:", error);
-      // Informative user-facing feedback tailored for Render's spin-up delay
-      alert("Connection handshake timed out. The cloud node is spinning up; please re-submit your message in 30 seconds.");
+      console.error("Connection Handshake Error:", error);
+      alert("Network Error: Cloud node is still initializing. Please wait 15-30 seconds and try again.");
     } finally {
       setIsSending(false);
       setTimeout(() => setIsSubmitted(false), 5000);
@@ -103,9 +101,9 @@ export default function Contact() {
             <motion.h2 variants={fadeInUp} className="text-3xl font-black tracking-tight mb-4 uppercase text-white">Direct Contact</motion.h2>
             
             <div className="space-y-4">
-              {[{ label: 'Engineering', val: 'pkeshav282@gmail.com', color: 'blue' }, { label: 'Partnerships', val: 'pkeshav282@gmail.com', color: 'purple' }].map((item, i) => (
+              {[{ label: 'Engineering', val: 'pkeshav282@gmail.com' }, { label: 'Partnerships', val: 'pkeshav282@gmail.com' }].map((item, i) => (
                 <div key={i} onClick={() => handleDirectMail(item.val)} className="group p-8 bg-white/5 border border-white/5 rounded-[2rem] backdrop-blur-xl flex items-center gap-6 transition-all hover:border-white/20 cursor-pointer">
-                  <div className={`w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all`}>
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                   </div>
                   <div>
@@ -125,8 +123,8 @@ export default function Contact() {
                     <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mb-8 shadow-lg shadow-blue-500/50">
                       <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                     </div>
-                    <h3 className="text-4xl font-black tracking-tighter mb-4 uppercase italic text-white">Transmission Received</h3>
-                    <p className="text-gray-400 font-light max-w-sm">Data has been successfully routed to your endpoint via the secure backend node.</p>
+                    <h3 className="text-4xl font-black tracking-tighter mb-4 uppercase italic text-white">Transmission Filed</h3>
+                    <p className="text-gray-400 font-light max-w-sm">Data has been securely parsed and indexed to your spreadsheet matrix layout.</p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -170,7 +168,7 @@ export default function Contact() {
 
                 <button type="submit" disabled={isSending} className="w-full group relative py-6 bg-blue-600 rounded-2xl font-black text-xs uppercase tracking-[0.3em] overflow-hidden transition-all hover:bg-blue-500 active:scale-[0.98] disabled:opacity-50">
                   <span className="relative z-10">
-                    {isSending ? 'Transmitting...' : 'Send Transmission'}
+                    {isSending ? 'Routing Telemetry...' : 'Send Transmission'}
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                 </button>

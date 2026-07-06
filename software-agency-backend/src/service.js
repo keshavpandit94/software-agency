@@ -14,22 +14,18 @@ app.use(cors({
 
 app.use(express.json());
 
-// Optimized Gmail Transporter utilizing Open Port 587 STARTTLS for Cloud Environments
+// UPDATED: Shifted to Secure Port 465 (SSL) to bypass Cloud Provider Firewall Blocks
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,              
-  secure: false,          
+  service: 'gmail', // Native shortcut handles host, port rules, and TLS servernames cleanly
+  port: 465,        // Secure port 465 is rarely blocked by hosting providers
+  secure: true,     // Must be true for port 465
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS 
+    pass: process.env.EMAIL_PASS // Must be your 16-character Google App Password
   },
   tls: {
-    rejectUnauthorized: false,
-    servername: 'smtp.gmail.com'
-  },
-  family: 4, 
-  connectionTimeout: 15000,
-  greetingTimeout: 15000
+    rejectUnauthorized: false // Keeps cloud environments from breaking on handshake mismatches
+  }
 });
 
 // Verify connection configuration on startup

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Contact() {
@@ -12,9 +12,28 @@ export default function Contact() {
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isWakingServer, setIsWakingServer] = useState(true);
   
   // Clean production API endpoint
   const api = "https://software-agency-backend.onrender.com";
+
+  // WAKE UP HANDSHAKE: Fires immediately when the component mounts to handle Render's free tier sleep mode
+  useEffect(() => {
+    const wakeServer = async () => {
+      try {
+        // Send a silent GET request to your backend's root or a status endpoint
+        await fetch(api);
+        setIsWakingServer(false);
+        console.log("⚙️ Render node successfully spun up and initialized.");
+      } catch (error) {
+        // If it fails initially, it could be halfway through spinning up; let the user still attempt the submission
+        setIsWakingServer(false); 
+        console.warn("⚠️ Initial server handshake failed, could still be initialization sequence.");
+      }
+    };
+
+    wakeServer();
+  }, [api]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -37,12 +56,12 @@ export default function Contact() {
         // Reset state matching new defaults safely
         setFormData({ name: '', email: '', service: 'Web Systems', budget: 'Medium (₹30k)', message: '' });
       } else {
-        alert("Backend Error: Failed to route transmission. Check your server's environment variables.");
+        alert("Transmission routing failed on the secure node. Please use the Direct Contact email links.");
       }
     } catch (error) {
       console.error("Connection Error:", error);
-      // FIXED: Swapped out hardcoded local port notification text for active network feedback
-      alert("Network Error: Cloud nodes could not establish a connection handshake. Try again later.");
+      // Informative user-facing feedback tailored for Render's spin-up delay
+      alert("Connection handshake timed out. The cloud node is spinning up; please re-submit your message in 30 seconds.");
     } finally {
       setIsSending(false);
       setTimeout(() => setIsSubmitted(false), 5000);
@@ -149,8 +168,10 @@ export default function Contact() {
                   <textarea name="message" value={formData.message} onChange={handleChange} required rows="4" placeholder="Describe the architectural requirements..." className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-blue-500 transition-all font-light resize-none"></textarea>
                 </div>
 
-                <button type="submit" disabled={isSending} className="w-full group relative py-6 bg-blue-600 rounded-2xl font-black text-xs uppercase tracking-[0.3em] overflow-hidden transition-all hover:bg-blue-500 active:scale-[0.98]">
-                  <span className="relative z-10">{isSending ? 'Transmitting...' : 'Send Transmission'}</span>
+                <button type="submit" disabled={isSending} className="w-full group relative py-6 bg-blue-600 rounded-2xl font-black text-xs uppercase tracking-[0.3em] overflow-hidden transition-all hover:bg-blue-500 active:scale-[0.98] disabled:opacity-50">
+                  <span className="relative z-10">
+                    {isSending ? 'Transmitting...' : 'Send Transmission'}
+                  </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                 </button>
               </form>

@@ -15,8 +15,9 @@ export default function Contact() {
   const [isWakingServer, setIsWakingServer] = useState(true);
   
   // Clean production API endpoint targeting your Render node
-  const api = "http://localhost:5000";
-
+  // const api = "http://localhost:5000";
+  const api = "https://software-agency-backend.onrender.com";
+  
   // WAKE UP HANDSHAKE: Fires immediately on mount to spin up Render's free tier instance
   useEffect(() => {
     const wakeServer = async () => {
